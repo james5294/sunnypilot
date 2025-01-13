@@ -9,6 +9,8 @@ from openpilot.common.swaglog import cloudlog
 # WARNING: imports outside of constants will not trigger a rebuild
 from openpilot.selfdrive.modeld.constants import index_function
 from openpilot.selfdrive.controls.radard import _LEAD_ACCEL_TAU
+from openpilot.common.conversions import Conversions as CV
+
 
 if __name__ == '__main__':  # generating code
   from openpilot.third_party.acados.acados_template import AcadosModel, AcadosOcp, AcadosOcpSolver
@@ -81,6 +83,23 @@ def get_T_FOLLOW(personality=log.LongitudinalPersonality.standard):
 
 def get_stopped_equivalence_factor(v_lead):
   return (v_lead**2) / (2 * COMFORT_BRAKE)
+
+def get_stopped_equivalence_factor_krkeegen(v_lead, v_ego):
+  v_diff_offset = 0
+  v_diff_offset_max = 12
+  speed_to_reach_max_v_diff_offset = 26 * CV.KPH_TO_MS  # in m/s
+  delta_speed = v_lead - v_ego
+  if np.any(delta_speed > 0):
+    # Scale v_diff_offset with a hybrid approach: linear with a smooth transition
+    v_diff_offset = np.clip(delta_speed * 1.5, 0, v_diff_offset_max)
+    scaling_factor = np.clip((speed_to_reach_max_v_diff_offset - v_ego) / speed_to_reach_max_v_diff_offset, 0, 1)
+    # Apply a stronger decay at higher speeds to avoid pulling too close
+    smooth_scaling = scaling_factor ** 3 * (10 - 9 * scaling_factor)
+    v_diff_offset *= smooth_scaling
+
+  stopping_distance = (v_lead ** 2) / (2 * COMFORT_BRAKE) + v_diff_offset
+  return stopping_distance
+
 
 def get_safe_obstacle_distance(v_ego, t_follow):
   return (v_ego**2) / (2 * COMFORT_BRAKE) + t_follow * v_ego + STOP_DISTANCE
@@ -327,7 +346,7 @@ class LongitudinalMpc:
     lead_xv = self.extrapolate_lead(x_lead, v_lead, a_lead, a_lead_tau)
     return lead_xv
 
-  def update(self, radarstate, v_cruise, x, v, a, j, personality=log.LongitudinalPersonality.standard):
+  def update(self, radarstate, v_cruise, x, v, a, j, personality=log.LongitudinalPersonality.standard, fast_take_off = False):
     t_follow = get_T_FOLLOW(personality)
     v_ego = self.x0[1]
     self.status = radarstate.leadOne.status or radarstate.leadTwo.status
@@ -338,8 +357,13 @@ class LongitudinalMpc:
     # To estimate a safe distance from a moving lead, we calculate how much stopping
     # distance that lead needs as a minimum. We can add that to the current distance
     # and then treat that as a stopped car/obstacle at this new distance.
-    lead_0_obstacle = lead_xv_0[:,0] + get_stopped_equivalence_factor(lead_xv_0[:,1])
-    lead_1_obstacle = lead_xv_1[:,0] + get_stopped_equivalence_factor(lead_xv_1[:,1])
+    if fast_take_off:
+      lead_0_obstacle = lead_xv_0[:,0] + get_stopped_equivalence_factor_krkeegen(lead_xv_0[:,1], v_ego)
+      lead_1_obstacle = lead_xv_1[:,0] + get_stopped_equivalence_factor_krkeegen(lead_xv_1[:,1], v_ego)
+    else:
+      lead_0_obstacle = lead_xv_0[:,0] + get_stopped_equivalence_factor(lead_xv_0[:,1])
+      lead_1_obstacle = lead_xv_1[:,0] + get_stopped_equivalence_factor(lead_xv_1[:,1])
+
 
     self.params[:,0] = ACCEL_MIN
     self.params[:,1] = ACCEL_MAX

@@ -159,6 +159,18 @@
         <source>Enables or disables the github runner service.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Toyota: Auto Brake Hold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toyota: Enhanced BSM</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toyota: custom tune</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>DevicePanel</name>
