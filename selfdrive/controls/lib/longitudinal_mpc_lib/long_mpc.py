@@ -66,18 +66,18 @@ def get_jerk_factor(personality=log.LongitudinalPersonality.standard):
   elif personality==log.LongitudinalPersonality.standard:
     return 1.0
   elif personality==log.LongitudinalPersonality.aggressive:
-    return 0.5
+    return 0.3
   else:
     raise NotImplementedError("Longitudinal personality not supported")
 
 
 def get_T_FOLLOW(personality=log.LongitudinalPersonality.standard):
   if personality==log.LongitudinalPersonality.relaxed:
-    return 1.75
+    return 1.80
   elif personality==log.LongitudinalPersonality.standard:
-    return 1.45
-  elif personality==log.LongitudinalPersonality.aggressive:
     return 1.25
+  elif personality==log.LongitudinalPersonality.aggressive:
+    return 1.10
   else:
     raise NotImplementedError("Longitudinal personality not supported")
 
@@ -89,6 +89,7 @@ def get_stopped_equivalence_factor_krkeegen(v_lead, v_ego):
   v_diff_offset_max = 12
   speed_to_reach_max_v_diff_offset = 26 * CV.KPH_TO_MS  # in m/s
   delta_speed = v_lead - v_ego
+
   if np.any(delta_speed > 0):
     # Scale v_diff_offset with a hybrid approach: linear with a smooth transition
     v_diff_offset = np.clip(delta_speed * 1.5, 0, v_diff_offset_max)
@@ -99,7 +100,6 @@ def get_stopped_equivalence_factor_krkeegen(v_lead, v_ego):
 
   stopping_distance = (v_lead ** 2) / (2 * COMFORT_BRAKE) + v_diff_offset
   return stopping_distance
-
 
 def get_safe_obstacle_distance(v_ego, t_follow):
   return (v_ego**2) / (2 * COMFORT_BRAKE) + t_follow * v_ego + STOP_DISTANCE
