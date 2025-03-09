@@ -22,7 +22,7 @@
 
 # Last updated: February 20, 2025
 from cereal import custom
-from openpilot.common.numpy_fast import interp
+from numpy import interp
 from openpilot.common.realtime import DT_MDL
 from openpilot.common.params import Params
 
