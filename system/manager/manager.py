@@ -49,7 +49,8 @@ def manager_init() -> None:
     ("MadsPauseLateralOnBrake", "0"),
     ("MadsUnifiedEngagementMode", "1"),
     ("ModelManager_LastSyncTime", "0"),
-    ("ModelManager_ModelsCache", "")
+    ("ModelManager_ModelsCache", ""),
+    ("QuietDrive", "0"),
   ]
 
   if params.get_bool("RecordFrontLock"):
