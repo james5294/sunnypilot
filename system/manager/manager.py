@@ -50,6 +50,9 @@ def manager_init() -> None:
     ("MadsUnifiedEngagementMode", "1"),
     ("ModelManager_LastSyncTime", "0"),
     ("ModelManager_ModelsCache", ""),
+    ("AutoLaneChangeTimer", "2"),
+    ("AutoLaneChangeBsmDelay", "1"),
+
 
     ("ToyotaAutoHold", "0"),
     ("ToyotaEnhancedBsm", "0"),
