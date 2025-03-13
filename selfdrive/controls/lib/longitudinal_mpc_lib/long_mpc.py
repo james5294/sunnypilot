@@ -95,7 +95,7 @@ def get_stopped_equivalence_factor_krkeegen(v_lead, v_ego):
     v_diff_offset = np.clip(delta_speed * 1.5, 0, v_diff_offset_max)
     scaling_factor = np.clip((speed_to_reach_max_v_diff_offset - v_ego) / speed_to_reach_max_v_diff_offset, 0, 1)
     # Apply a stronger decay at higher speeds to avoid pulling too close
-    smooth_scaling = scaling_factor ** 3 * (10 - 9 * scaling_factor)
+    smooth_scaling = scaling_factor ** 2.5 * (10 - 9 * scaling_factor)
     v_diff_offset *= smooth_scaling
 
   stopping_distance = (v_lead ** 2) / (2 * COMFORT_BRAKE) + v_diff_offset
