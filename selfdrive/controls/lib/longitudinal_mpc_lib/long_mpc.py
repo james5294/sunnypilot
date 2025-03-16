@@ -64,20 +64,20 @@ def get_jerk_factor(personality=log.LongitudinalPersonality.standard):
   if personality==log.LongitudinalPersonality.relaxed:
     return 1.0
   elif personality==log.LongitudinalPersonality.standard:
-    return 1.0
+    return 0.5
   elif personality==log.LongitudinalPersonality.aggressive:
-    return 0.3
+    return 0.22
   else:
     raise NotImplementedError("Longitudinal personality not supported")
 
 
 def get_T_FOLLOW(personality=log.LongitudinalPersonality.standard):
   if personality==log.LongitudinalPersonality.relaxed:
-    return 1.80
+    return 1.70
   elif personality==log.LongitudinalPersonality.standard:
     return 1.25
   elif personality==log.LongitudinalPersonality.aggressive:
-    return 1.10
+    return 1.05
   else:
     raise NotImplementedError("Longitudinal personality not supported")
 
@@ -91,14 +91,19 @@ def get_stopped_equivalence_factor_krkeegen(v_lead, v_ego):
   delta_speed = v_lead - v_ego
 
   if np.any(delta_speed > 0):
-    # Scale v_diff_offset with a hybrid approach: linear with a smooth transition
-    v_diff_offset = np.clip(delta_speed * 1.5, 0, v_diff_offset_max)
+    # Softer v_diff_offset increase
+    v_diff_offset = np.clip(delta_speed * 1.1, 0, v_diff_offset_max)
     scaling_factor = np.clip((speed_to_reach_max_v_diff_offset - v_ego) / speed_to_reach_max_v_diff_offset, 0, 1)
-    # Apply a stronger decay at higher speeds to avoid pulling too close
     smooth_scaling = scaling_factor ** 2.5 * (10 - 9 * scaling_factor)
+
+    # Apply an additional softening effect for speeds below 5.6 m/s (20 kph)
+    if v_ego < 5.6:
+      low_speed_factor = np.clip(v_ego / 5.6, 0.5, 1)  # Reduces impact at very low speeds
+      v_diff_offset *= low_speed_factor * 0.8  # Further softens low-speed braking
+
     v_diff_offset *= smooth_scaling
 
-  stopping_distance = (v_lead ** 2) / (2 * COMFORT_BRAKE) + v_diff_offset
+  stopping_distance = (v_lead ** 2) / (2 * COMFORT_BRAKE) + v_diff_offset + 0.5  # Small buffer for a softer stop
   return stopping_distance
 
 def get_safe_obstacle_distance(v_ego, t_follow):
